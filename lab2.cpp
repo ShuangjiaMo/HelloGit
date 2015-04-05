@@ -5,23 +5,19 @@
 #include <cstdlib>
 using namespace std;
 
-bool game();
+bool game(), MakeChoice();
 double CardValue(int CardNumber);
-void PrintCard(int color, int number);
+void PrintCard(int CardNumber);
 
 int main()
-{	char choice_1 = 'y';
+{	bool choice_1 = true;
 	
-	while (choice_1 == 'Y' || choice_1 == 'y'){
+	while (choice_1 == true){
 		if (game()) cout << "You win." << endl;
 		else cout << "You lose." << endl;
 		
-		do {
-			cout << "Continue?(y/n) ";
-			cin >> choice_1;
-			cin.sync();
-		} while (choice_1 != 'Y' && choice_1 != 'y' && choice_1 != 'N' && choice_1 != 'n');
-		
+		cout << "Continue?(y/n) ";
+		choice_1 = MakeChoice();
 		cout << endl;
 	}
 	
@@ -30,70 +26,75 @@ int main()
 
 bool game()
 {	char choice_2 = 'y';
-	int cards[52][2], P_card[52][2], C_card[52][2], P_round = 1, C_round = 1, i, j;
 	double P_sum, C_sum;
-	
-	cout << "---Player's Turn---" << endl << "Your cards: ";
-	
-	srand(time(NULL));
-	cards[0][0] = P_card[0][0] = rand() % 4;
-	cards[0][1] = P_card[0][1] = rand() % 13;
-	
-	P_sum = CardValue(P_card[0][1]);
-	
-	while (choice_2 == 'y'){
-		cards[P_round][0] = P_card[P_round][0] = rand() % 4;
-		cards[P_round][1] = P_card[P_round][1] = rand() % 13;
+	int cards[52], shuffle[52], LeftNum = 52, RanNum, P_round = 1, C_round, i;
+
+	for(i=0; i<52; i++) cards[i]=i;			//Part 1: Shuffling the cards
+
+	for(i=0; i<52; i++){					
+		srand(time(NULL));
+		RanNum=rand() % LeftNum;			
+											//cards[52] is a sequence of natural numbers from 0 to 51
+		shuffle[i]=cards[RanNum];			//shuffle[52] is a disorder of cards[52]
+		cards[RanNum]=cards[LeftNum-1];
 		
-		for (i=0; i<=P_round; ++i) PrintCard(P_card[i][0], P_card[i][1]);
+		LeftNum--;      
+	}
+	
+	cout << "---Player's Turn---" << endl;			//Part 2: Player's turn
+	P_sum = CardValue(shuffle[0]);
+	
+	while (choice_2){
+		cout << "Your cards: ";
+		for (i=0; i<=P_round; ++i) PrintCard(shuffle[i]);
 		cout << endl;
 		
-		P_sum += CardValue(P_card[P_round][1]); 	
+		P_sum += CardValue(shuffle[P_round]); 	
 		if (P_sum > 21) return false;
 		
-		do {
-			cout << "Need another card?(y/n) ";
-			cin >> choice_2;
-			cin.sync(); 
-		} while (choice_2 != 'Y' && choice_2 != 'y' && choice_2 != 'N' && choice_2 != 'n');
-		
-		if (choice_2 == 'Y' || choice_2 == 'y') cout << "Your cards: ";
+		cout << "Need another card?(y/n) ";
+		choice_2 = MakeChoice();
 		
 		++P_round;
 	}
 	
-	cout << "---Computer's Turn---" << endl << "Computer's cards: ";
-		
-	C_card[0][0] = rand() % 4;
-	C_card[0][1] = rand() % 13;
-	C_sum = CardValue(C_card[0][1]);
+	cout << "---Computer's Turn---" << endl;			//Part 3: Computer's turn
+	C_round = P_round;
+	C_sum = CardValue(shuffle[C_round]);
 	
-	while (C_round == 1 || C_sum <= P_sum){
-		C_card[C_round][0] = rand() % 4;
-		C_card[C_round][1] = rand() % 13;
-		
-		for (j=0; j<=C_round; ++j) PrintCard(C_card[j][0], C_card[j][1]);
+	while (true){
+		cout << "Computer's cards: ";		
+		for (i=P_round; i<=C_round+1; ++i) PrintCard(shuffle[i]);
 		cout << endl;
 		
-		C_sum += CardValue(C_card[C_round][1]);		
+		C_sum += CardValue(shuffle[C_round+1]);		
 		if (C_sum > 21) return true;
-		
-		if (C_sum <= P_sum) cout << "Computer's cards: ";
-		else return false;
+		if (C_sum > P_sum) return false;
 			
 		++C_round;
 	}
 }
 
-double CardValue(int CardNumber)
-{	if (CardNumber > 9) return 0.5;
-	else return CardNumber+1;
+bool MakeChoice()
+{	char choice;
+	
+	do {cin >> choice;
+		cin.sync(); 
+	} while (choice != 'Y' && choice != 'y' && choice != 'N' && choice != 'n');			//check the input
+	
+	if (choice == 'Y' || choice == 'y') return true;
+	else return false;
 }
 
-void PrintCard(int color, int number)
+double CardValue(int CardNumber)
+{	if (CardNumber%13 > 9) return 0.5;
+	else return CardNumber%13+1;
+}
+
+void PrintCard(int CardNumber)			//translate the card number(a number between 0 and 51) to a card
 {	char ColorPicture;
 	
-	switch(color){
+	switch(CardNumber/13){
 		case 0: ColorPicture = 6; break;
 		case 1: ColorPicture = 3; break;
 		case 2: ColorPicture = 5; break;
@@ -101,12 +102,12 @@ void PrintCard(int color, int number)
 	}
 	cout << ColorPicture;
 	
-	switch(number){
+	switch(CardNumber%13){
 		case 0: cout << 'A'; break;
 		case 10: cout << 'J'; break;
 		case 11: cout << 'Q'; break;
 		case 12: cout << 'K'; break;
-		default: cout << number+1;
+		default: cout << CardNumber%13+1;
 	}
 	cout << ' ';	
 }
